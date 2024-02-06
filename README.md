@@ -53,7 +53,8 @@ Model Explainability: Can you use Amazon Sagemaker Clarity to make your models m
 
 ## Directions
 
-
+%%bash
+tar -czf dogImages.tar.gz dogImages
 
 I understand your situation and I experienced the same thing before. Please note that you won't need to re-download it to your sagemaker workspace once you finished the upload.
 
