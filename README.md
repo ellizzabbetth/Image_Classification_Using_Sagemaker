@@ -53,6 +53,11 @@ Model Explainability: Can you use Amazon Sagemaker Clarity to make your models m
 
 ## Directions
 
+
+### In AWS open SageMake Studio Classic
+
+### Run space
+
 %%bash
 tar -czf dogImages.tar.gz dogImages
 
