@@ -7,29 +7,21 @@ import torch.optim as optim
 import torchvision
 import torchvision.models as models
 import torchvision.transforms as transforms
-import torchvision.datasets as datasets
 import smdebug.pytorch as smd
 import argparse
 import smdebug
 from smdebug.profiler.utils import str2bool
 from smdebug.pytorch import get_hook
 import torch.nn.functional as F
-
 import os
 import sys
 import json
 import logging
-
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
-
-from PIL import ImageFile
-ImageFile.LOAD_TRUNCATED_IMAGES = True
-
-
-#TODO: Import dependencies for Debugging and Profiling
+#TODO: Import dependencies for Debugging andd Profiling
 
 def test(model, test_loader, criterion, hook):
     '''
@@ -113,12 +105,14 @@ def create_data_loaders(data_dir, batch_size):
     depending on whether you need to use data loaders or not
     '''
     logger.info("Create train data loader")
-    dataloaders = {
-        split : torch.utils.data.DataLoader(data[split], batch_size, shuffle=True)
-        for split in ['train', 'valid', 'test']
-    }
+    cus_transform=transforms.Compose([
+        transforms.ToTensor(), 
+        transforms.Resize((224,224))
+    ])
+    data = torchvision.datasets.ImageFolder(root=data_dir, transform=cus_transform)
+    loader = torch.utils.data.DataLoader(data, batch_size=batch_size, shuffle=True)
+    return loader
 
-    return dataloaders
 
 def model_fn(model_dir):
     model = net()
@@ -131,81 +125,39 @@ def main(args):
     '''
     Initialize a model by calling the net function
     '''
-
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    '''
-    TODO: Initialize a model by calling the net function
-    '''
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    
     model=net()
-    # create the debugging profiling hook
+    model.to(device)
     hook = smd.Hook.create_from_json_file()
-    # register the model for debugging and saving tensors
+#     hook = smd.Hook(out_dir=args.output_dir) # this line of code would result in error: all the collection files could not be loaded.
     hook.register_hook(model)
     
     '''
-    TODO: Create your loss and optimizer
+    Create your loss and optimizer
     '''
     loss_criterion = nn.CrossEntropyLoss()
-    # register the model loss for debugging
-    hook.register_loss(loss_criterion)
-
-    optimizer = optim.Adam(model.fc.parameters(), args.lr)
+    optimizer = optim.Adam(model.fc.parameters(), lr=args.lr)
+#     hook.register_loss(loss_criterion)
     
     '''
-    TODO: Call the train function to start training your model
+    Call the train function to start training your model
     Remember that you will need to set up a way to get training data from S3
     '''
-    # loading the data
-    # declaring the data_transforms for train, validation and test datasets
-    data_transforms = {
-        'train': transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ]),
-        'valid': transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ]),
-        'test': transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-    }
-
-    # loading the datasets
-    image_datasets = {
-        split : datasets.ImageFolder(os.path.join(args.data_dir, split), data_transforms[split])
-        for split in ['train', 'valid', 'test']
-    }
-
-    dataloaders = create_data_loaders(image_datasets , args.batch_size)
-    train_loader = dataloaders['train']
-    valid_loader = dataloaders['valid']
-    test_loader = dataloaders['test']
-
-    train_loaders = {
-        'train' : train_loader,
-        'valid' : valid_loader
-    }
-
-    model=train(model, train_loaders, args.epochs, loss_criterion, optimizer, device, hook)
+  
+    train_loader = create_data_loaders(args.train_data_dir, args.batch_size)
+    test_loader = create_data_loaders(args.test_data_dir, args.batch_size)
     
-    '''
-    TODO: Test the model to see its accuracy
-    '''
-    test(model, test_loader, loss_criterion, device, hook)
+    for epoch in range(1, args.epochs + 1):
+     
+        model = train(model, train_loader, loss_criterion, optimizer, hook)
+        test(model, test_loader, loss_criterion, hook)
     
-    '''
-    TODO: Save the trained model
-    '''
-    path = os.path.join(args.model_dir, 'model.pth')
-    torch.save(model.cpu().state_dict(), path)
+        '''
+        Save the trained model
+        '''
+        path = os.path.join(args.model_dir, "model.pth")
+        torch.save(model.cpu().state_dict(), path)
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser()
@@ -233,34 +185,36 @@ if __name__=='__main__':
         metavar="N",
         help="number of epochs to train (default: 10)",
     )
-
-    parser.add_argument("--data-dir", type=str, default=os.environ["SM_CHANNEL_DATA"])
+#     parser.add_argument(
+#         "--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)"
+#     )    
+    
     parser.add_argument(
         "--lr", type=float, default=0.01, metavar="LR", help="learning rate (default: 0.01)"
     )    
     # refer to https://sagemaker.readthedocs.io/en/stable/overview.html#prepare-a-training-script
     
-    # parser.add_argument(
-    #     "--train-data-dir", # the actual variable is train_data_dir
-    #     type=str,
-    #     default=os.environ['SM_CHANNEL_TRAIN'],
-    #     metavar="TDD",
-    #     help="Training data directory",
-    # )
-    # parser.add_argument(
-    #     "--test-data-dir",
-    #     type=str,
-    #     default=os.environ['SM_CHANNEL_TEST'],
-    #     metavar="EDD",
-    #     help="Test data directory",
-    # )
-    # parser.add_argument(
-    #     "--val-data-dir",
-    #     type=str,
-    #     default=os.environ['SM_CHANNEL_VAL'],
-    #     metavar="VDD",
-    #     help="Test data directory",
-    # )
+    parser.add_argument(
+        "--train-data-dir", # the actual variable is train_data_dir
+        type=str,
+        default=os.environ['SM_CHANNEL_TRAIN'],
+        metavar="TDD",
+        help="Training data directory",
+    )
+    parser.add_argument(
+        "--test-data-dir",
+        type=str,
+        default=os.environ['SM_CHANNEL_TEST'],
+        metavar="EDD",
+        help="Test data directory",
+    )
+    parser.add_argument(
+        "--val-data-dir",
+        type=str,
+        default=os.environ['SM_CHANNEL_VAL'],
+        metavar="VDD",
+        help="Test data directory",
+    )
     
     parser.add_argument('--model-dir', type=str, default=os.environ['SM_MODEL_DIR'])
     parser.add_argument('--output-dir', type=str, default=os.environ['SM_OUTPUT_DATA_DIR'])
