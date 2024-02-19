@@ -78,3 +78,7 @@ Although this is not explained, or even mentioned, on the "Step 2: Train the Mod
 It looks like we could (if not for the project's requirements) just use tuner.best_estimator() from the first model that was trained using hyperparameter tuning, and not need to train the second model with best_estimator.hyperparameters(), is that correct?
 Is the purpose of training a second model, using train_model.py and best_estimator.hyperparameters() from the first training, so that we can apply model debugging and profiling to the second model training?
 I'm presuming that we would not want to debug/profile when using hyperparameter tuning, as we would not want to see all of that, from every combination it tried, is that why we're doing it this way?
+
+## 
+
+https://knowledge.udacity.com/questions/766656

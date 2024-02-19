@@ -22,20 +22,27 @@ import smdebug.pytorch as smd
 
 
 def test(model, test_loader, criterion, hook):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    model.eval()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") # Ensure the model is on the correct device
+    model.eval()  # Set the model to evaluation mode
     hook.set_mode(smd.modes.EVAL)
     test_loss = 0
     running_corrects = 0
     
-    for inputs, labels in test_loader:
-        if torch.cuda.is_available():
-            images, labels = images.cuda(), labels.cuda() # inputs, labels = inputs.to(device), labels.to(device)
-        outputs = model(inputs)
-        test_loss += criterion(outputs, labels).item()
-        _, preds = torch.max(outputs, 1)
-        running_corrects += torch.sum(preds==labels.data).item()
-        
+    with torch.no_grad():  # No gradients are needed for the evaluation
+        for inputs, labels in test_loader:
+            if torch.cuda.is_available():
+                images, labels = inputs, labels = inputs.to(device), labels.to(device) # images.cuda(), labels.cuda() # 
+            outputs = model(inputs)  # Forward pass
+            pred = outputs.argmax(dim=1, keepdim=True)  # Get the index of the max log-probability
+            correct += pred.eq(labels.view_as(pred)).sum().item()  # Count correct predictions
+            test_loss += criterion(outputs, labels).item()
+            _, preds = torch.max(outputs, 1)
+            running_corrects += torch.sum(preds==labels.data).item()
+
+
+     # Calculate the percentage of correct answers
+    test_accuracy = 100 * correct / len(test_loader.dataset)
+    logger.info(f'Test set: Accuracy: {correct}/{len(test_loader.dataset)} ({test_accuracy:.2f}%)')       
     average_accuracy = running_corrects / len(test_loader.dataset)
     average_loss = test_loss / len(test_loader.dataset)
     logger.info(f'Test set: Average loss: {average_loss}, Average accuracy: {100*average_accuracy}%')
@@ -50,16 +57,28 @@ def train(model, train_loader, validation_loader, epochs, criterion, optimizer, 
 
         hook.set_mode(smd.modes.TRAIN)
         model.train()
-        
-        for inputs, labels in train_loader:
-            optimizer.zero_grad()
-            inputs, labels = inputs.to(device), labels.to(device)
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+        running_loss = 0
+        correct = 0
+        total = 0  # Keep track of total number of samples seen
+
+        for inputs, labels in train_loader: # Iterates through batches
+            optimizer.zero_grad() # Resets gradients for new batch
+            inputs, labels = inputs.to(device), labels.to(device)  # Move data/input and target/label to the device
+            outputs = model(inputs)  # Runs Forward Pass
+            loss = criterion(outputs, labels)  # Calculates Loss
+            running_loss += loss.item()  # Sum up batch loss
+            loss.backward()  # Calculates Gradients for Model Parameters
+            optimizer.step() # Updates Weights
+            outputs = outputs.argmax(dim=1, keepdim=True)  # Get the index of the max log-probability
+            correct += outputs.eq(labels.view_as(outputs)).sum().item()  # Counts number of correct predictions
+            total += labels.size(0)
             count += len(inputs)
-            
+
+
+        avg_loss = running_loss / len(train_loader)  # Average loss per batch
+        avg_accuracy = 100 * correct / total  # Average accuracy
+        logger.info(f'Epoch {epoch}: Loss {avg_loss:.4f}, Accuracy {avg_accuracy:.2f}%')   
+
         hook.set_mode(smd.modes.EVAL)
         model.eval()
         running_corrects = 0
