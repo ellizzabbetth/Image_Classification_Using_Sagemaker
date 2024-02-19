@@ -27,6 +27,7 @@ def test(model, test_loader, criterion, hook):
     hook.set_mode(smd.modes.EVAL)
     test_loss = 0
     running_corrects = 0
+    correct = 0
     
     with torch.no_grad():  # No gradients are needed for the evaluation
         for inputs, labels in test_loader:
