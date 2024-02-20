@@ -18,7 +18,7 @@ import requests
 #https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/using_pytorch.html#serve-a-pytorch-model
 
 def model_fn(model_dir):
-    model = models.resnet50(pretrained = True)
+    model = models.resnet18(pretrained = True)
     
     for param in model.parameters():
         param.required_grad = False

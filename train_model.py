@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler(sys.stdout))
 
+# Debugging tools
 import smdebug.pytorch as smd
 
 
@@ -55,7 +56,7 @@ def train(model, train_loader, validation_loader, epochs, criterion, optimizer, 
 
     
     for epoch in range(epochs):
-
+        # Set the hook to train mode
         hook.set_mode(smd.modes.TRAIN)
         model.train()
         running_loss = 0
@@ -98,19 +99,16 @@ def train(model, train_loader, validation_loader, epochs, criterion, optimizer, 
     
     
 def net():
-    model = models.resnet50(pretrained = True)
+    model = models.resnet18(pretrained = True)
     
     for param in model.parameters():
         param.required_grad = False
     
     num_features = model.fc.in_features
-    num_classes = 133
-    model.fc = nn.Sequential(nn.Linear(num_features, 256), 
-                                                nn.ReLU(),                 
-                                                nn.Linear(256, 128),
-                                                nn.ReLU(),
-                                                nn.Linear(128,  num_classes),
-                                                nn.LogSoftmax(dim=1))
+    num_classes = 133 # the dataset has 133 distinct dog breeds therefore we need 133 output options
+    model.fc = nn.Sequential(
+        nn.Linear(num_features, 133)
+    )
     return model
     
 
@@ -127,11 +125,11 @@ def create_data_loaders(data, batch_size):
     test_transform = transforms.Compose([transforms.Resize(256),
                                                                         transforms.Resize((224, 224)),
                                                                         transforms.ToTensor()])
-    
+    # Use the ImageFolder to get the data and transform it
     train_dataset = torchvision.datasets.ImageFolder(root=train_path, transform=train_transform)    
     test_dataset = torchvision.datasets.ImageFolder(root=test_path, transform=test_transform)
     validation_dataset = torchvision.datasets.ImageFolder(root=validation_path, transform=test_transform)
-
+    # Create a loader for the training data and return it
     train_data_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_data_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     validation_data_loader = torch.utils.data.DataLoader(validation_dataset, batch_size=batch_size, shuffle=False)
@@ -140,16 +138,34 @@ def create_data_loaders(data, batch_size):
     
 
 def main(args):
+    """
+    Switch to GPU if available
+    """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    logger.info("Device: {}".format(device))
+    
+    
+    """
+    Log the hyperparameters
+    """
+    logger.info(
+        "batch size: {}; test batch size: {}, epochs: {}, lr: {}".format(
+            args.batch_size,
+            args.test_batch_size,
+            args.epochs,
+            args.lr
+        )
+    )
     
     model = net()
-    model = model.to(device)
+    model = model.to(device) # Move model to compute device
     
     loss_criterion = nn.CrossEntropyLoss() 
     optimizer = optim.Adam(model.fc.parameters(), lr=0.001)
     
+    # Create a hook
     hook = smd.Hook.create_from_json_file()
-    hook.register_hook(model)
+    hook.register_hook(model) # register the model
     
     train_data_loader, test_data_loader, validation_data_loader = create_data_loaders(data=args.data_dir, batch_size=args.batch_size)
     

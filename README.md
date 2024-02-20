@@ -2,6 +2,8 @@
 
 Use AWS Sagemaker to train a pretrained model that can perform image classification by using the Sagemaker profiling, debugger, hyperparameter tuning and other good ML engineering practices. This can be done on either the provided dog breed classication data set or one of your choice.
 
+Write code to use Sagemaker to finetune a pretrained model with hyperparameter tuning. Once you have found the best hyperparameters, you can use them to train an estimator with model debugging and profiling. This model will then need to be deployed and tested.
+
 ## Project Set Up and Installation
 Enter AWS through the gateway in the course and open SageMaker Studio. 
 Download the starter files.
@@ -23,19 +25,67 @@ Remember that your README should:
 - Tune at least two hyperparameters
 - Retrieve the best best hyperparameters from all your training jobs
 
+
+https://pages.awscloud.com/rs/112-TZM-766/images/AL-ML%20for%20Startups%20-%20Select%20the%20Right%20ML%20Instance.pdf
+
+https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/using_pytorch.html#serve-a-pytorch-model
+
+
+2024-02-20 12:07:53 Starting - Preparing the instances for training
+2024-02-20 12:07:53 Downloading - Downloading the training image
+2024-02-20 12:07:53 Training - Training image download completed. Training in progress.
+2024-02-20 12:07:53 Uploading - Uploading generated training model
+2024-02-20 12:07:53 Completed - Resource retained for reuse
+{'_tuning_objective_metric': '"average test loss"',
+
+```python
+ 'batch_size': '"64"',
+ 'epochs': '"3"',
+ 'lr': '0.013836913247884417'
+```
+
+![](screenshots/hypertuning.png)
+
+
+ 'sagemaker_container_log_level': '20',
+ 'sagemaker_estimator_class_name': '"PyTorch"',
+ 'sagemaker_estimator_module': '"sagemaker.pytorch.estimator"',
+ 'sagemaker_job_name': '"pytorch-training-2024-02-20-12-00-40-627"',
+ 'sagemaker_program': '"hpo.py"',
+ 'sagemaker_region': '"us-east-1"',
+ 'sagemaker_submit_directory': '"s3://sagemaker-us-east-1-477120104741/pytorch-training-2024-02-20-12-00-40-627/source/sourcedir.tar.gz"'}
+
 ## Debugging and Profiling
 **TODO**: Give an overview of how you performed model debugging and profiling in Sagemaker
+
 
 ### Results
 **TODO**: What are the results/insights did you get by profiling/debugging your model?
 
 **TODO** Remember to provide the profiler html/pdf file in your submission.
+![](screenshots/averge_loss.png)
+![](screenshots/cross_entropy.png)
 
 
 ## Model Deployment
 **TODO**: Give an overview of the deployed model and instructions on how to query the endpoint with a sample input.
 
+
+Given that the pretrainned resnet18 model was fairly basic, it's performance is acceptable. The validation accuracy is X%.
+
+
+
+The endpoint was deployed using the "ml.g4dn.2xlarge" instance with the inference script.
+
+![](screenshots/endpoint.png)
+![](screenshots/endpoint2.png)
+
 **TODO** Remember to provide a screenshot of the deployed active endpoint in Sagemaker.
+JOB 1 (the best model):
+
+![](screenshots/endpoint2.png)
+![](screenshots/model.png)
+![](screenshots/model3.png)
 
 ## Standout Suggestions
 **TODO (Optional):** This is where you can provide information about any standout suggestions that you have attempted.

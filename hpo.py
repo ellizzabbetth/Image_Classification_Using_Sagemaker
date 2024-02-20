@@ -54,7 +54,7 @@ def train(model, train_loader, epochs, criterion, optimizer):
     return model 
     
 def net():
-    model = models.resnet50(pretrained = True)
+    model = models.resnet18(pretrained = True)
     
     for param in model.parameters():
         param.required_grad = False 
