@@ -25,6 +25,11 @@ Remember that your README should:
 - Tune at least two hyperparameters
 - Retrieve the best best hyperparameters from all your training jobs
 
+### GPU instance
+GPUs, or Graphics Processing Units, are well-suited to deep learning for several reasons. First, deep learning involves performing many parallel computations, and GPUs are designed to handle parallel processing efficiently, making them ideal for tasks like matrix multiplication and neural network operations. Second, GPUs have a large number of cores, which allows them to handle multiple calculations simultaneously, speeding up the training and inference processes in deep learning. Additionally, GPUs are optimized for handling large amounts of data, which is essential in deep learning tasks that involve processing and analyzing massive datasets. Overall, the parallel processing power, large number of cores, and data-handling capabilities of GPUs make them well-suited for accelerating deep learning tasks.
+
+
+![alt text](https://imgs.search.brave.com/gTd6ydTlc8dWSIBQm-awW8ArgKORecw8_7XHvbwHzos/rs:fit:500:0:0/g:ce/aHR0cHM6Ly9pMi53/cC5jb20vaS5waW5p/bWcuY29tL29yaWdp/bmFscy84Mi9mNS9l/ZS84MmY1ZWU0MDJj/Nzk0MDQxNjY1ZjQ2/OGY5NGZkMjNlMC5q/cGc)
 
 https://pages.awscloud.com/rs/112-TZM-766/images/AL-ML%20for%20Startups%20-%20Select%20the%20Right%20ML%20Instance.pdf
 
@@ -63,6 +68,8 @@ https://sagemaker.readthedocs.io/en/stable/frameworks/pytorch/using_pytorch.html
 **TODO**: What are the results/insights did you get by profiling/debugging your model?
 
 **TODO** Remember to provide the profiler html/pdf file in your submission.
+
+Cross-entropy is a measure of the difference between two probability distributions for a given random variable or set of events.
 ![](screenshots/averge_loss.png)
 ![](screenshots/cross_entropy.png)
 
@@ -86,6 +93,9 @@ JOB 1 (the best model):
 ![](screenshots/endpoint2.png)
 ![](screenshots/model.png)
 ![](screenshots/model3.png)
+
+
+https://youtu.be/Md4b67HvmRo
 
 ## Standout Suggestions
 **TODO (Optional):** This is where you can provide information about any standout suggestions that you have attempted.
